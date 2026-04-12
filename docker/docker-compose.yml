@@ -1,0 +1,58 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cnpj-postgres
+    environment:
+      POSTGRES_USER: cnpj_user
+      POSTGRES_PASSWORD: cnpj_pass
+      POSTGRES_DB: cnpj
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U cnpj_user -d cnpj']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: cnpj-postgres-test
+    environment:
+      POSTGRES_USER: cnpj_user
+      POSTGRES_PASSWORD: cnpj_pass
+      POSTGRES_DB: cnpj_test
+    ports:
+      - '5433:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U cnpj_user -d cnpj_test']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: cnpj-api
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://cnpj_user:cnpj_pass@postgres:5432/cnpj?schema=public
+      RECEITA_BASE_URL: https://dados.rfb.gov.br/CNPJ/
+      DOWNLOAD_DIR: /data/downloads
+      IMPORT_BATCH_SIZE: '5000'
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - download_data:/data/downloads
+
+volumes:
+  postgres_data:
+  download_data:

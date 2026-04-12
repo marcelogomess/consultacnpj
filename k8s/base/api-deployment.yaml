@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cnpj-api
+  namespace: cnpj
+  labels:
+    app: cnpj-api
+    app.kubernetes.io/name: cnpj-api
+    app.kubernetes.io/component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cnpj-api
+  template:
+    metadata:
+      labels:
+        app: cnpj-api
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: cnpj-api
+          image: cnpj-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: cnpj-api-config
+            - secretRef:
+                name: cnpj-api-secret
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /api/health/live
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health/ready
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: downloads
+              mountPath: /data/downloads
+      volumes:
+        - name: downloads
+          persistentVolumeClaim:
+            claimName: cnpj-downloads-pvc

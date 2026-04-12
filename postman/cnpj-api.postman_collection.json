@@ -1,0 +1,810 @@
+{
+  "info": {
+    "_postman_id": "cnpj-api-collection",
+    "name": "cnpj-api",
+    "description": "API de consulta de dados públicos do CNPJ — Receita Federal do Brasil.\n\n## Configuração\nImporte também o arquivo de environment `cnpj-api.postman_environment.json` e selecione-o antes de executar as requisições.\n\n## Variáveis de ambiente\n- `baseUrl` — URL base da API (ex: `http://localhost:3000`)\n- `cnpj_exemplo` — CNPJ com formatação para testes\n- `cnpj_rfb` — CNPJ da Receita Federal (real, para validações)\n\n## Rate Limiting\nA API limita a **100 req/min** por IP. Respostas com status `429` indicam limite atingido.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "description": "Endpoints de health check para Kubernetes liveness e readiness probes.",
+      "item": [
+        {
+          "name": "Liveness — GET /health/live",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/live",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "live"]
+            },
+            "description": "Kubernetes liveness probe. Retorna 200 `{ status: 'ok' }` sempre que a aplicação está rodando. Nunca checa o banco."
+          },
+          "response": [
+            {
+              "name": "200 — OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/health/live",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "health", "live"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"status\": \"ok\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Body tem status ok', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Readiness — GET /health/ready",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health", "ready"]
+            },
+            "description": "Kubernetes readiness probe. Retorna 200 se o banco está acessível, 503 caso contrário."
+          },
+          "response": [
+            {
+              "name": "200 — Banco conectado",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/health/ready",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "health", "ready"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"status\": \"ok\",\n  \"database\": \"connected\"\n}"
+            },
+            {
+              "name": "503 — Banco indisponível",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/health/ready",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "health", "ready"]
+                }
+              },
+              "status": "Service Unavailable",
+              "code": 503,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 503,\n  \"message\": \"Service Unavailable\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200 ou 503', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 503]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CNPJ",
+      "description": "Consulta de dados cadastrais por CNPJ e listagem paginada com filtros.",
+      "item": [
+        {
+          "name": "Buscar por CNPJ — GET /cnpj/:cnpj",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cnpj/{{cnpj_rfb}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cnpj", "{{cnpj_rfb}}"]
+            },
+            "description": "Retorna dados completos de um CNPJ: empresa, todos os estabelecimentos, sócios e dados do Simples Nacional.\n\nAceita CNPJ com ou sem formatação:\n- `00394460000141`\n- `00.394.460/0001-41`\n\n**Erros possíveis:**\n- `400 CNPJ_INVALIDO` — CNPJ com dígito verificador inválido ou formato errado\n- `404 CNPJ_NAO_ENCONTRADO` — CNPJ válido mas não encontrado no banco"
+          },
+          "response": [
+            {
+              "name": "200 — Empresa encontrada",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cnpj/00394460000141",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "cnpj", "00394460000141"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"cnpj\": \"00.394.460/0001-41\",\n  \"cnpjBasico\": \"00394460\",\n  \"razaoSocial\": \"SERVICO FEDERAL DE PROCESSAMENTO DE DADOS\",\n  \"naturezaJuridica\": {\n    \"codigo\": \"1104\",\n    \"descricao\": \"EMPRESA PUBLICA\"\n  },\n  \"qualificacaoResponsavel\": {\n    \"codigo\": \"16\",\n    \"descricao\": \"PRESIDENTE\"\n  },\n  \"capitalSocial\": 0,\n  \"porteEmpresa\": {\n    \"codigo\": \"05\",\n    \"descricao\": \"DEMAIS\"\n  },\n  \"enteFederativoResponsavel\": \"UNIAO\",\n  \"simplesNacional\": null,\n  \"estabelecimentos\": [\n    {\n      \"cnpj\": \"00.394.460/0001-41\",\n      \"cnpjOrdem\": \"0001\",\n      \"cnpjDv\": \"41\",\n      \"tipo\": { \"codigo\": \"1\", \"descricao\": \"MATRIZ\" },\n      \"nomeFantasia\": \"SERPRO\",\n      \"situacaoCadastral\": { \"codigo\": \"02\", \"descricao\": \"ATIVA\" },\n      \"dataSituacaoCadastral\": \"19670912\",\n      \"motivoSituacaoCadastral\": null,\n      \"dataInicioAtividade\": \"19670912\",\n      \"cnaePrincipal\": {\n        \"codigo\": \"6311900\",\n        \"descricao\": \"TRATAMENTO DE DADOS, PROVEDORES DE SERVIÇOS DE APLICAÇÃO E SERVIÇOS DE HOSPEDAGEM NA INTERNET\"\n      },\n      \"cnaeSecundario\": [],\n      \"endereco\": {\n        \"tipoLogradouro\": \"SHN\",\n        \"logradouro\": \"QUADRA 02\",\n        \"numero\": \"S/N\",\n        \"complemento\": \"BLOCO F\",\n        \"bairro\": \"ASA NORTE\",\n        \"cep\": \"70702070\",\n        \"uf\": \"DF\",\n        \"municipio\": { \"codigo\": \"9701\", \"descricao\": \"BRASILIA\" }\n      },\n      \"telefones\": [\n        { \"ddd\": \"61\", \"numero\": \"34487000\" }\n      ],\n      \"email\": null,\n      \"situacaoEspecial\": null,\n      \"dataSituacaoEspecial\": null\n    }\n  ],\n  \"socios\": []\n}"
+            },
+            {
+              "name": "400 — CNPJ inválido",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cnpj/00000000000000",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "cnpj", "00000000000000"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 400,\n  \"code\": \"CNPJ_INVALIDO\",\n  \"message\": \"CNPJ inválido\",\n  \"path\": \"/api/cnpj/00000000000000\",\n  \"timestamp\": \"2024-01-01T00:00:00.000Z\"\n}"
+            },
+            {
+              "name": "404 — CNPJ não encontrado",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cnpj/00000000000191",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "cnpj", "00000000000191"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 404,\n  \"code\": \"CNPJ_NAO_ENCONTRADO\",\n  \"message\": \"CNPJ 00.000.000/0001-91 não encontrado\",\n  \"path\": \"/api/cnpj/00000000000191\",\n  \"timestamp\": \"2024-01-01T00:00:00.000Z\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200, 400 ou 404', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 400, 404]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test('Resposta tem cnpjBasico', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('cnpjBasico');",
+                  "    pm.expect(json).to.have.property('razaoSocial');",
+                  "    pm.expect(json).to.have.property('estabelecimentos');",
+                  "    pm.expect(json).to.have.property('socios');",
+                  "  });",
+                  "  pm.test('Campos de domínio têm codigo e descricao', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.naturezaJuridica).to.have.all.keys('codigo', 'descricao');",
+                  "    pm.expect(json.porteEmpresa).to.have.all.keys('codigo', 'descricao');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar por CNPJ formatado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cnpj/00.394.460/0001-41",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cnpj", "00.394.460", "0001-41"]
+            },
+            "description": "Mesmo endpoint, aceitando CNPJ com formatação (pontos, barra e hífen)."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar CNPJs — GET /cnpj",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cnpj?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cnpj"],
+              "query": [
+                { "key": "page", "value": "1", "description": "Página (default: 1)" },
+                { "key": "limit", "value": "20", "description": "Itens por página (default: 20, max: 100)" },
+                { "key": "situacao_cadastral", "value": null, "description": "Filtro: 01=Nula, 02=Ativa, 03=Suspensa, 04=Inapta, 08=Baixada", "disabled": true },
+                { "key": "uf", "value": null, "description": "Filtro por UF (ex: MG, SP, RJ)", "disabled": true },
+                { "key": "municipio", "value": null, "description": "Filtro por código do município", "disabled": true },
+                { "key": "cnae", "value": null, "description": "Filtro por CNAE principal", "disabled": true },
+                { "key": "natureza_juridica", "value": null, "description": "Filtro por código de natureza jurídica", "disabled": true },
+                { "key": "porte", "value": null, "description": "Filtro por porte: 00, 01, 03, 05", "disabled": true },
+                { "key": "razao_social", "value": null, "description": "Busca textual na razão social (case-insensitive)", "disabled": true }
+              ]
+            },
+            "description": "Listagem paginada com filtros opcionais. Retorna `{ data, meta }` com metadados de paginação.\n\n**Filtros disponíveis:**\n- `situacao_cadastral`: `02` = Ativa\n- `uf`: sigla do estado\n- `municipio`: código de 4 dígitos\n- `cnae`: código CNAE de 7 dígitos\n- `natureza_juridica`: código de 4 dígitos\n- `porte`: `00` / `01` / `03` / `05`\n- `razao_social`: busca parcial (ILIKE)"
+          },
+          "response": [
+            {
+              "name": "200 — Lista paginada",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/cnpj?page=1&limit=20",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "cnpj"],
+                  "query": [
+                    { "key": "page", "value": "1" },
+                    { "key": "limit", "value": "20" }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"data\": [\n    {\n      \"cnpj\": \"11.222.333/0001-81\",\n      \"cnpjBasico\": \"11222333\",\n      \"razaoSocial\": \"EMPRESA EXEMPLO LTDA\",\n      \"naturezaJuridica\": { \"codigo\": \"2062\", \"descricao\": \"SOCIEDADE EMPRESARIA LIMITADA\" },\n      \"capitalSocial\": 100000,\n      \"porteEmpresa\": { \"codigo\": \"01\", \"descricao\": \"MICRO EMPRESA\" }\n    }\n  ],\n  \"meta\": {\n    \"total\": 1,\n    \"page\": 1,\n    \"limit\": 20,\n    \"pages\": 1\n  }\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Resposta tem data e meta', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('data').that.is.an('array');",
+                  "  pm.expect(json).to.have.property('meta');",
+                  "  pm.expect(json.meta).to.have.all.keys('total', 'page', 'limit', 'pages');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar — Filtro por UF e situação",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cnpj?uf={{uf}}&situacao_cadastral=02&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cnpj"],
+              "query": [
+                { "key": "uf", "value": "{{uf}}" },
+                { "key": "situacao_cadastral", "value": "02" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            },
+            "description": "Empresas ativas filtradas pela UF definida na variável de ambiente."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar — Busca por razão social",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cnpj?razao_social=TECH&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cnpj"],
+              "query": [
+                { "key": "razao_social", "value": "TECH", "description": "Busca textual (case-insensitive, parcial)" },
+                { "key": "limit", "value": "5" }
+              ]
+            },
+            "description": "Busca empresas cuja razão social contenha o texto informado (ILIKE)."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar — Filtro por CNAE e porte",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cnpj?cnae={{cnae_codigo}}&porte=01&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cnpj"],
+              "query": [
+                { "key": "cnae", "value": "{{cnae_codigo}}" },
+                { "key": "porte", "value": "01", "description": "01 = Micro empresa" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Micro empresas do CNAE definido na variável de ambiente."
+          },
+          "response": []
+        },
+        {
+          "name": "400 — Limit acima do máximo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cnpj?limit=200",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cnpj"],
+              "query": [
+                { "key": "limit", "value": "200", "description": "Máximo permitido é 100" }
+              ]
+            },
+            "description": "Deve retornar 400 porque `limit` excede o máximo de 100."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400 para limit > 100', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Domínio",
+      "description": "Endpoints para listagem das tabelas de domínio (lookup tables): países, municípios, CNAEs, naturezas jurídicas, qualificações e motivos de situação cadastral.",
+      "item": [
+        {
+          "name": "Listar Países — GET /dominio/paises",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dominio/paises",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dominio", "paises"]
+            },
+            "description": "Retorna todos os países cadastrados na tabela de domínio, ordenados por descrição."
+          },
+          "response": [
+            {
+              "name": "200 — Lista de países",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/dominio/paises",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "dominio", "paises"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "[\n  { \"codigo\": \"001\", \"descricao\": \"AFEGANISTÃO\" },\n  { \"codigo\": \"032\", \"descricao\": \"ALEMANHA\" },\n  { \"codigo\": \"105\", \"descricao\": \"BRASIL\" },\n  { \"codigo\": \"245\", \"descricao\": \"ESTADOS UNIDOS\" }\n]"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Resposta é array', () => {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
+                  "pm.test('Itens têm codigo e descricao', () => {",
+                  "  const arr = pm.response.json();",
+                  "  if (arr.length > 0) {",
+                  "    pm.expect(arr[0]).to.have.all.keys('codigo', 'descricao');",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar Municípios — GET /dominio/municipios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dominio/municipios",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dominio", "municipios"],
+              "query": [
+                { "key": "uf", "value": null, "description": "Filtro por UF (retorna apenas municípios com estabelecimentos nessa UF)", "disabled": true }
+              ]
+            },
+            "description": "Lista todos os municípios. Com `?uf=MG` retorna apenas municípios que possuem estabelecimentos cadastrados na UF informada."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Resposta é array', () => {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar Municípios filtrado por UF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dominio/municipios?uf={{uf}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dominio", "municipios"],
+              "query": [
+                { "key": "uf", "value": "{{uf}}" }
+              ]
+            },
+            "description": "Municípios que possuem estabelecimentos cadastrados na UF informada."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar CNAEs — GET /dominio/cnaes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dominio/cnaes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dominio", "cnaes"],
+              "query": [
+                { "key": "q", "value": null, "description": "Busca textual na descrição do CNAE (ex: desenvolvimento, comércio)", "disabled": true }
+              ]
+            },
+            "description": "Lista todos os CNAEs, ordenados por código. Com `?q=texto` filtra por busca textual na descrição."
+          },
+          "response": [
+            {
+              "name": "200 — Lista de CNAEs",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/dominio/cnaes",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "dominio", "cnaes"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "[\n  { \"codigo\": \"6201501\", \"descricao\": \"DESENVOLVIMENTO DE PROGRAMAS DE COMPUTADOR SOB ENCOMENDA\" },\n  { \"codigo\": \"6202300\", \"descricao\": \"DESENVOLVIMENTO E LICENCIAMENTO DE PROGRAMAS DE COMPUTADOR CUSTOMIZÁVEIS\" }\n]"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Resposta é array', () => {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar CNAEs — busca por texto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dominio/cnaes?q=desenvolvimento",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dominio", "cnaes"],
+              "query": [
+                { "key": "q", "value": "desenvolvimento" }
+              ]
+            },
+            "description": "Filtra CNAEs pela palavra \"desenvolvimento\" na descrição (case-insensitive)."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Naturezas Jurídicas — GET /dominio/naturezas-juridicas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dominio/naturezas-juridicas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dominio", "naturezas-juridicas"]
+            },
+            "description": "Lista todas as naturezas jurídicas disponíveis, ordenadas por código."
+          },
+          "response": [
+            {
+              "name": "200 — Lista de naturezas jurídicas",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/dominio/naturezas-juridicas",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "dominio", "naturezas-juridicas"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "[\n  { \"codigo\": \"1023\", \"descricao\": \"ÓRGÃO PÚBLICO DO PODER EXECUTIVO FEDERAL\" },\n  { \"codigo\": \"2054\", \"descricao\": \"SOCIEDADE ANONIMA ABERTA\" },\n  { \"codigo\": \"2062\", \"descricao\": \"SOCIEDADE EMPRESARIA LIMITADA\" },\n  { \"codigo\": \"4120\", \"descricao\": \"ASSOCIAÇÃO PRIVADA\" }\n]"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar Qualificações de Sócios — GET /dominio/qualificacoes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dominio/qualificacoes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dominio", "qualificacoes"]
+            },
+            "description": "Lista todas as qualificações de sócios (ex: sócio-administrador, diretor, presidente)."
+          },
+          "response": [
+            {
+              "name": "200 — Lista de qualificações",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/dominio/qualificacoes",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "dominio", "qualificacoes"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "[\n  { \"codigo\": \"05\", \"descricao\": \"ADMINISTRADOR\" },\n  { \"codigo\": \"10\", \"descricao\": \"DIRETOR\" },\n  { \"codigo\": \"49\", \"descricao\": \"SÓCIO-ADMINISTRADOR\" }\n]"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar Motivos de Situação Cadastral — GET /dominio/motivos-situacao",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/dominio/motivos-situacao",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dominio", "motivos-situacao"]
+            },
+            "description": "Lista todos os motivos de situação cadastral (ex: extinção, incorporação, omissão de declarações)."
+          },
+          "response": [
+            {
+              "name": "200 — Lista de motivos",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/dominio/motivos-situacao",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "dominio", "motivos-situacao"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "[\n  { \"codigo\": \"01\", \"descricao\": \"EXTINÇÃO POR ENCERRAMENTO LIQUIDAÇÃO VOLUNTÁRIA\" },\n  { \"codigo\": \"02\", \"descricao\": \"INCORPORAÇÃO\" },\n  { \"codigo\": \"63\", \"descricao\": \"OMISSÃO DE DECLARAÇÕES\" }\n]"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cenários de Erro",
+      "description": "Requisições que devem retornar erros para validar o comportamento da API.",
+      "item": [
+        {
+          "name": "400 — CNPJ com todos dígitos iguais",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cnpj/11111111111111",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cnpj", "11111111111111"]
+            },
+            "description": "Sequências com todos os dígitos iguais são inválidas."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Código CNPJ_INVALIDO', () => {",
+                  "  pm.expect(pm.response.json().code).to.eql('CNPJ_INVALIDO');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 — CNPJ com dígito verificador errado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cnpj/12345678000199",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cnpj", "12345678000199"]
+            },
+            "description": "CNPJ com 14 dígitos mas dígito verificador incorreto."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404 — CNPJ válido mas inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cnpj/00000000000191",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cnpj", "00000000000191"]
+            },
+            "description": "CNPJ com dígitos verificadores corretos mas não cadastrado no banco."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Código CNPJ_NAO_ENCONTRADO', () => {",
+                  "  pm.expect(pm.response.json().code).to.eql('CNPJ_NAO_ENCONTRADO');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400 — Query param inválido (porte fora do domínio)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cnpj?porte=99",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cnpj"],
+              "query": [
+                { "key": "porte", "value": "99", "description": "Valores aceitos: 00, 01, 03, 05" }
+              ]
+            },
+            "description": "Valor de porte fora do conjunto permitido (00, 01, 03, 05) deve retornar 400."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

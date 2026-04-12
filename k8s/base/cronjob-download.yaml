@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cnpj-download
+  namespace: cnpj
+  labels:
+    app.kubernetes.io/name: cnpj-api
+    app.kubernetes.io/component: download-job
+spec:
+  # Executa no dia 15 de cada mês às 02:00
+  schedule: "0 2 15 * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: cnpj-download
+              image: cnpj-api:latest
+              imagePullPolicy: Always
+              command: ["node", "dist/scripts/run-download.js"]
+              envFrom:
+                - configMapRef:
+                    name: cnpj-api-config
+                - secretRef:
+                    name: cnpj-api-secret
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "500m"
+              volumeMounts:
+                - name: downloads
+                  mountPath: /data/downloads
+          volumes:
+            - name: downloads
+              persistentVolumeClaim:
+                claimName: cnpj-downloads-pvc

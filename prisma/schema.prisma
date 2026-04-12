@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================
+// TABELAS DE DOMÍNIO (lookup tables)
+// =============================================
+
+model Pais {
+  codigo    String @id @map("codigo") @db.Char(3)
+  descricao String @map("descricao") @db.VarChar(255)
+
+  estabelecimentos Estabelecimento[] @relation("EstabelecimentoPais")
+  socios           Socio[]           @relation("SocioPais")
+
+  @@map("paises")
+}
+
+model Municipio {
+  codigo    String @id @map("codigo") @db.Char(4)
+  descricao String @map("descricao") @db.VarChar(255)
+
+  estabelecimentos Estabelecimento[] @relation("EstabelecimentoMunicipio")
+
+  @@map("municipios")
+}
+
+model QualificacaoSocio {
+  codigo    String @id @map("codigo") @db.Char(2)
+  descricao String @map("descricao") @db.VarChar(255)
+
+  @@map("qualificacoes_socios")
+}
+
+model NaturezaJuridica {
+  codigo    String @id @map("codigo") @db.Char(4)
+  descricao String @map("descricao") @db.VarChar(255)
+
+  empresas Empresa[] @relation("EmpresaNaturezaJuridica")
+
+  @@map("naturezas_juridicas")
+}
+
+model Cnae {
+  codigo    String @id @map("codigo") @db.Char(7)
+  descricao String @map("descricao") @db.VarChar(255)
+
+  @@map("cnaes")
+}
+
+model MotivoSituacaoCadastral {
+  codigo    String @id @map("codigo") @db.Char(2)
+  descricao String @map("descricao") @db.VarChar(255)
+
+  @@map("motivos_situacao_cadastral")
+}
+
+// =============================================
+// TABELAS PRINCIPAIS
+// =============================================
+
+model Empresa {
+  cnpjBasico                String  @id @map("cnpj_basico") @db.Char(8)
+  razaoSocial               String  @map("razao_social") @db.VarChar(255)
+  naturezaJuridicaCodigo    String  @map("natureza_juridica") @db.Char(4)
+  qualificacaoResponsavel   String  @map("qualificacao_responsavel") @db.Char(2)
+  capitalSocial             Decimal @map("capital_social") @db.Decimal(14, 2)
+  porteEmpresa              String  @map("porte_empresa") @db.Char(2)
+  enteFederativoResponsavel String? @map("ente_federativo_responsavel") @db.VarChar(255)
+
+  naturezaJuridica NaturezaJuridica @relation("EmpresaNaturezaJuridica", fields: [naturezaJuridicaCodigo], references: [codigo])
+  estabelecimentos Estabelecimento[]
+  socios           Socio[]
+  simplesNacional  SimplesNacional?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("empresas")
+}
+
+model Estabelecimento {
+  id                            Int     @id @default(autoincrement())
+  cnpjBasico                    String  @map("cnpj_basico") @db.Char(8)
+  cnpjOrdem                     String  @map("cnpj_ordem") @db.Char(4)
+  cnpjDv                        String  @map("cnpj_dv") @db.Char(2)
+  identificadorMatrizFilial     String  @map("identificador_matriz_filial") @db.Char(1)
+  nomeFantasia                  String? @map("nome_fantasia") @db.VarChar(255)
+  situacaoCadastral             String  @map("situacao_cadastral") @db.Char(2)
+  dataSituacaoCadastral         String? @map("data_situacao_cadastral") @db.Char(8)
+  motivoSituacaoCadastralCodigo String? @map("motivo_situacao_cadastral") @db.Char(2)
+  nomeCidadeExterior            String? @map("nome_cidade_exterior") @db.VarChar(255)
+  paisCodigo                    String? @map("pais") @db.Char(3)
+  dataInicioAtividade           String? @map("data_inicio_atividade") @db.Char(8)
+  cnaeFiscalPrincipal           String? @map("cnae_fiscal_principal") @db.Char(7)
+  cnaeFiscalSecundaria          String? @map("cnae_fiscal_secundaria") @db.Text
+  tipoLogradouro                String? @map("tipo_logradouro") @db.VarChar(50)
+  logradouro                    String? @db.VarChar(255)
+  numero                        String? @db.VarChar(10)
+  complemento                   String? @db.VarChar(255)
+  bairro                        String? @db.VarChar(100)
+  cep                           String? @db.Char(8)
+  uf                            String? @db.Char(2)
+  municipioCodigo               String? @map("municipio") @db.Char(4)
+  ddd1                          String? @db.Char(4)
+  telefone1                     String? @db.VarChar(8)
+  ddd2                          String? @db.Char(4)
+  telefone2                     String? @db.VarChar(8)
+  dddFax                        String? @map("ddd_fax") @db.Char(4)
+  fax                           String? @db.VarChar(8)
+  correioEletronico             String? @map("correio_eletronico") @db.VarChar(255)
+  situacaoEspecial              String? @map("situacao_especial") @db.VarChar(255)
+  dataSituacaoEspecial          String? @map("data_situacao_especial") @db.Char(8)
+
+  empresa   Empresa    @relation(fields: [cnpjBasico], references: [cnpjBasico])
+  pais      Pais?      @relation("EstabelecimentoPais", fields: [paisCodigo], references: [codigo])
+  municipio Municipio? @relation("EstabelecimentoMunicipio", fields: [municipioCodigo], references: [codigo])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([cnpjBasico, cnpjOrdem, cnpjDv])
+  @@index([situacaoCadastral])
+  @@index([cnaeFiscalPrincipal])
+  @@index([uf])
+  @@index([municipioCodigo])
+  @@map("estabelecimentos")
+}
+
+model Socio {
+  id                        Int     @id @default(autoincrement())
+  cnpjBasico                String  @map("cnpj_basico") @db.Char(8)
+  identificadorSocio        String  @map("identificador_socio") @db.Char(1)
+  nomeSocio                 String  @map("nome_socio") @db.VarChar(255)
+  cpfCnpjSocio              String? @map("cpf_cnpj_socio") @db.VarChar(14)
+  qualificacaoSocioCodigo   String  @map("qualificacao_socio") @db.Char(2)
+  dataEntradaSociedade      String? @map("data_entrada_sociedade") @db.Char(8)
+  paisCodigo                String? @map("pais") @db.Char(3)
+  representanteLegal        String? @map("representante_legal") @db.VarChar(11)
+  nomeRepresentante         String? @map("nome_representante") @db.VarChar(255)
+  qualificacaoRepresentante String? @map("qualificacao_representante") @db.Char(2)
+  faixaEtaria               String? @map("faixa_etaria") @db.Char(1)
+
+  empresa Empresa @relation(fields: [cnpjBasico], references: [cnpjBasico])
+  pais    Pais?   @relation("SocioPais", fields: [paisCodigo], references: [codigo])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([cnpjBasico])
+  @@index([cpfCnpjSocio])
+  @@map("socios")
+}
+
+model SimplesNacional {
+  cnpjBasico          String  @id @map("cnpj_basico") @db.Char(8)
+  opcaoSimples        String? @map("opcao_simples") @db.Char(1)
+  dataOpcaoSimples    String? @map("data_opcao_simples") @db.Char(8)
+  dataExclusaoSimples String? @map("data_exclusao_simples") @db.Char(8)
+  opcaoMei            String? @map("opcao_mei") @db.Char(1)
+  dataOpcaoMei        String? @map("data_opcao_mei") @db.Char(8)
+  dataExclusaoMei     String? @map("data_exclusao_mei") @db.Char(8)
+
+  empresa Empresa @relation(fields: [cnpjBasico], references: [cnpjBasico])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("simples_nacional")
+}
+
+model ImportLog {
+  id           Int       @id @default(autoincrement())
+  tipo         String    @db.VarChar(20)
+  arquivo      String    @db.VarChar(255)
+  status       String    @db.VarChar(20)
+  registros    Int?
+  erro         String?   @db.Text
+  iniciadoEm   DateTime  @map("iniciado_em")
+  finalizadoEm DateTime? @map("finalizado_em")
+
+  @@index([tipo, status])
+  @@map("import_logs")
+}

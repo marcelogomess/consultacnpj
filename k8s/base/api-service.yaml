@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cnpj-api
+  namespace: cnpj
+  labels:
+    app: cnpj-api
+    app.kubernetes.io/name: cnpj-api
+    app.kubernetes.io/component: api
+spec:
+  selector:
+    app: cnpj-api
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: ClusterIP

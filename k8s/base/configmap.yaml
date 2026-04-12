@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cnpj-api-config
+  namespace: cnpj
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"
+  RECEITA_BASE_URL: "https://dados.rfb.gov.br/CNPJ/"
+  DOWNLOAD_DIR: "/data/downloads"
+  IMPORT_BATCH_SIZE: "5000"

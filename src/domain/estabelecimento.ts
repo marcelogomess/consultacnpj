@@ -1,0 +1,32 @@
+export interface Estabelecimento {
+  cnpjBasico: string;
+  cnpjOrdem: string;
+  cnpjDv: string;
+  identificadorMatrizFilial: string;
+  nomeFantasia: string | null;
+  situacaoCadastral: string;
+  dataSituacaoCadastral: string | null;
+  motivoSituacaoCadastralCodigo: string | null;
+  nomeCidadeExterior: string | null;
+  paisCodigo: string | null;
+  dataInicioAtividade: string | null;
+  cnaeFiscalPrincipal: string | null;
+  cnaeFiscalSecundaria: string | null;
+  tipoLogradouro: string | null;
+  logradouro: string | null;
+  numero: string | null;
+  complemento: string | null;
+  bairro: string | null;
+  cep: string | null;
+  uf: string | null;
+  municipioCodigo: string | null;
+  ddd1: string | null;
+  telefone1: string | null;
+  ddd2: string | null;
+  telefone2: string | null;
+  dddFax: string | null;
+  fax: string | null;
+  correioEletronico: string | null;
+  situacaoEspecial: string | null;
+  dataSituacaoEspecial: string | null;
+}
