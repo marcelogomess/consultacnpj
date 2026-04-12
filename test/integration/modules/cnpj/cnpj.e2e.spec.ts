@@ -3,11 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../../../../src/app.module';
 import { HttpExceptionFilter } from '../../../../src/common/filters/http-exception.filter';
-import {
-  criarEmpresa,
-  criarEstabelecimento,
-  limparBanco,
-} from '../../setup/factories';
+import { criarEmpresa, criarEstabelecimento, limparBanco } from '../../setup/factories';
 
 describe('CnpjController (e2e)', () => {
   let app: INestApplication;

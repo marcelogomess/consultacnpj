@@ -35,9 +35,7 @@ export class DominioService {
 
   async listarCnaes(q?: string) {
     return this.prisma.cnae.findMany({
-      where: q
-        ? { descricao: { contains: q, mode: 'insensitive' } }
-        : undefined,
+      where: q ? { descricao: { contains: q, mode: 'insensitive' } } : undefined,
       orderBy: { codigo: 'asc' },
     });
   }

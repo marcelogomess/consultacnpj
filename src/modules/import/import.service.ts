@@ -60,7 +60,11 @@ export class ImportService {
       { padrao: /PAISCSV/i, nome: 'Países', fn: this.importarPaises.bind(this) },
       { padrao: /MUNICCSV/i, nome: 'Municípios', fn: this.importarMunicipios.bind(this) },
       { padrao: /QUALSCSV/i, nome: 'Qualificações', fn: this.importarQualificacoes.bind(this) },
-      { padrao: /NATJUCSV/i, nome: 'Naturezas Jurídicas', fn: this.importarNaturezasJuridicas.bind(this) },
+      {
+        padrao: /NATJUCSV/i,
+        nome: 'Naturezas Jurídicas',
+        fn: this.importarNaturezasJuridicas.bind(this),
+      },
       { padrao: /CNAECSV/i, nome: 'CNAEs', fn: this.importarCnaes.bind(this) },
       { padrao: /MOTICSV/i, nome: 'Motivos', fn: this.importarMotivos.bind(this) },
     ];

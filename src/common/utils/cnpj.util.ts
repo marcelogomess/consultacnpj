@@ -51,9 +51,7 @@ export function validarCnpj(cnpj: string): boolean {
 
   // Validação do primeiro dígito verificador
   const calcDv = (digits: string, weights: number[]): number => {
-    const sum = digits
-      .split('')
-      .reduce((acc, d, i) => acc + parseInt(d, 10) * weights[i], 0);
+    const sum = digits.split('').reduce((acc, d, i) => acc + parseInt(d, 10) * weights[i], 0);
     const remainder = sum % 11;
     return remainder < 2 ? 0 : 11 - remainder;
   };

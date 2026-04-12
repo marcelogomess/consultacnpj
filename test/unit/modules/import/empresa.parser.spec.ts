@@ -9,15 +9,7 @@ describe('EmpresaParser', () => {
 
   describe('parseLine', () => {
     it('deve parsear linha de empresa com todos os 7 campos', () => {
-      const fields = [
-        '11222333',
-        'EMPRESA EXEMPLO LTDA',
-        '2062',
-        '49',
-        '100000,00',
-        '01',
-        '',
-      ];
+      const fields = ['11222333', 'EMPRESA EXEMPLO LTDA', '2062', '49', '100000,00', '01', ''];
       const result = parser.parseLine(fields);
       expect(result).not.toBeNull();
       expect(result!.cnpjBasico).toBe('11222333');

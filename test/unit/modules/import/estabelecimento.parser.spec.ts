@@ -7,40 +7,42 @@ describe('EstabelecimentoParser', () => {
     parser = new EstabelecimentoParser();
   });
 
-  const buildFields = (overrides: Partial<Record<number, string>> = {}): string[] => {
+  const buildFields = (overrides: Record<number, string> = {}): string[] => {
     const defaults: string[] = [
       '11222333', // 0: cnpjBasico
-      '0001',     // 1: cnpjOrdem
-      '81',       // 2: cnpjDv
-      '1',        // 3: matrizFilial
-      'EXEMPLO',  // 4: nomeFantasia
-      '02',       // 5: situacaoCadastral
+      '0001', // 1: cnpjOrdem
+      '81', // 2: cnpjDv
+      '1', // 3: matrizFilial
+      'EXEMPLO', // 4: nomeFantasia
+      '02', // 5: situacaoCadastral
       '20200115', // 6: dataSituacaoCadastral
-      '',         // 7: motivoSituacaoCadastral
-      '',         // 8: nomeCidadeExterior
-      '',         // 9: pais
+      '', // 7: motivoSituacaoCadastral
+      '', // 8: nomeCidadeExterior
+      '', // 9: pais
       '20200101', // 10: dataInicioAtividade
-      '6201501',  // 11: cnaeFiscalPrincipal
+      '6201501', // 11: cnaeFiscalPrincipal
       '6202300,6204000', // 12: cnaeFiscalSecundaria
-      'RUA',      // 13: tipoLogradouro
+      'RUA', // 13: tipoLogradouro
       'DAS FLORES', // 14: logradouro
-      '100',      // 15: numero
-      'SALA 1',   // 16: complemento
-      'CENTRO',   // 17: bairro
+      '100', // 15: numero
+      'SALA 1', // 16: complemento
+      'CENTRO', // 17: bairro
       '30130000', // 18: cep
-      'MG',       // 19: uf
-      '7107',     // 20: municipio
-      '31',       // 21: ddd1
+      'MG', // 19: uf
+      '7107', // 20: municipio
+      '31', // 21: ddd1
       '99999999', // 22: telefone1
-      '',         // 23: ddd2
-      '',         // 24: telefone2
-      '',         // 25: dddFax
-      '',         // 26: fax
+      '', // 23: ddd2
+      '', // 24: telefone2
+      '', // 25: dddFax
+      '', // 26: fax
       'contato@exemplo.com', // 27: email
-      '',         // 28: situacaoEspecial
-      '',         // 29: dataSituacaoEspecial
+      '', // 28: situacaoEspecial
+      '', // 29: dataSituacaoEspecial
     ];
-    Object.entries(overrides).forEach(([i, v]) => { defaults[Number(i)] = v; });
+    Object.entries(overrides).forEach(([i, v]) => {
+      defaults[Number(i)] = v;
+    });
     return defaults;
   };
 

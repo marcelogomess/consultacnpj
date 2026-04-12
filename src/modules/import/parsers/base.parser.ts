@@ -75,8 +75,6 @@ export abstract class BaseParser<T> {
       yield batch;
     }
 
-    this.logger.log(
-      `Arquivo processado: ${lineCount} linhas, ${errorCount} erros`,
-    );
+    this.logger.log(`Arquivo processado: ${lineCount} linhas, ${errorCount} erros`);
   }
 }

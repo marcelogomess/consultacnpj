@@ -7,7 +7,9 @@ import { CnaeParser } from '../../../../src/modules/import/parsers/cnae.parser';
 describe('Parsers de Domínio', () => {
   describe('PaisParser', () => {
     let parser: PaisParser;
-    beforeEach(() => { parser = new PaisParser(); });
+    beforeEach(() => {
+      parser = new PaisParser();
+    });
 
     it('deve parsear linha com código e descrição', () => {
       const result = parser.parseLine(['105', 'BRASIL']);
@@ -34,7 +36,9 @@ describe('Parsers de Domínio', () => {
 
   describe('MunicipioParser', () => {
     let parser: MunicipioParser;
-    beforeEach(() => { parser = new MunicipioParser(); });
+    beforeEach(() => {
+      parser = new MunicipioParser();
+    });
 
     it('deve parsear linha com código e descrição', () => {
       const result = parser.parseLine(['7107', 'BELO HORIZONTE']);
@@ -50,7 +54,9 @@ describe('Parsers de Domínio', () => {
 
   describe('QualificacaoParser', () => {
     let parser: QualificacaoParser;
-    beforeEach(() => { parser = new QualificacaoParser(); });
+    beforeEach(() => {
+      parser = new QualificacaoParser();
+    });
 
     it('deve parsear linha com código e descrição', () => {
       const result = parser.parseLine(['49', 'SÓCIO-ADMINISTRADOR']);
@@ -66,7 +72,9 @@ describe('Parsers de Domínio', () => {
 
   describe('NaturezaJuridicaParser', () => {
     let parser: NaturezaJuridicaParser;
-    beforeEach(() => { parser = new NaturezaJuridicaParser(); });
+    beforeEach(() => {
+      parser = new NaturezaJuridicaParser();
+    });
 
     it('deve parsear linha com código e descrição', () => {
       const result = parser.parseLine(['2062', 'SOCIEDADE EMPRESARIA LIMITADA']);
@@ -77,10 +85,15 @@ describe('Parsers de Domínio', () => {
 
   describe('CnaeParser', () => {
     let parser: CnaeParser;
-    beforeEach(() => { parser = new CnaeParser(); });
+    beforeEach(() => {
+      parser = new CnaeParser();
+    });
 
     it('deve parsear linha com código e descrição', () => {
-      const result = parser.parseLine(['6201501', 'DESENVOLVIMENTO DE PROGRAMAS DE COMPUTADOR SOB ENCOMENDA']);
+      const result = parser.parseLine([
+        '6201501',
+        'DESENVOLVIMENTO DE PROGRAMAS DE COMPUTADOR SOB ENCOMENDA',
+      ]);
       expect(result!.codigo).toBe('6201501');
       expect(result!.descricao).toBe('DESENVOLVIMENTO DE PROGRAMAS DE COMPUTADOR SOB ENCOMENDA');
     });

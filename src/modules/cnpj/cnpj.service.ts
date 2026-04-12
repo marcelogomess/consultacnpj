@@ -1,9 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { validarCnpj, limparCnpj, formatarCnpj, extrairPartesCnpj } from '../../common/utils/cnpj.util';
 import {
-  descricaoSituacaoCadastral,
-} from '../../domain/enums/situacao-cadastral.enum';
+  validarCnpj,
+  limparCnpj,
+  formatarCnpj,
+  extrairPartesCnpj,
+} from '../../common/utils/cnpj.util';
+import { descricaoSituacaoCadastral } from '../../domain/enums/situacao-cadastral.enum';
 import { descricaoPorteEmpresa } from '../../domain/enums/porte-empresa.enum';
 import { descricaoIdentificadorSocio } from '../../domain/enums/identificador-socio.enum';
 import { descricaoMatrizFilial } from '../../domain/enums/matriz-filial.enum';
@@ -80,9 +83,7 @@ export class CnpjService {
     // Buscar CNAEs secundários
     const cnaeSecundariosCodes = empresa.estabelecimentos
       .flatMap((e) =>
-        e.cnaeFiscalSecundaria
-          ? e.cnaeFiscalSecundaria.split(',').map((c) => c.trim())
-          : [],
+        e.cnaeFiscalSecundaria ? e.cnaeFiscalSecundaria.split(',').map((c) => c.trim()) : [],
       )
       .filter(Boolean);
     const uniqueCnaeCodes = [...new Set(cnaeSecundariosCodes)];
@@ -107,8 +108,8 @@ export class CnpjService {
         : [];
     const motivoMap = new Map(motivos.map((m) => [m.codigo, m.descricao]));
 
-    const estabelecimentosDto: EstabelecimentoResponseDto[] =
-      empresa.estabelecimentos.map((est) => {
+    const estabelecimentosDto: EstabelecimentoResponseDto[] = empresa.estabelecimentos.map(
+      (est) => {
         const telefones: TelefoneDto[] = [];
         if (est.ddd1 && est.telefone1) {
           telefones.push({ ddd: est.ddd1, numero: est.telefone1 });
@@ -173,7 +174,8 @@ export class CnpjService {
           situacaoEspecial: est.situacaoEspecial,
           dataSituacaoEspecial: est.dataSituacaoEspecial,
         };
-      });
+      },
+    );
 
     const sociosDto: SocioResponseDto[] = empresa.socios.map((socio) => ({
       identificador: {
@@ -227,7 +229,8 @@ export class CnpjService {
       simplesNacional: sn
         ? {
             opcaoSimples: sn.opcaoSimples,
-            descricaoOpcaoSimples: sn.opcaoSimples === 'S' ? 'SIM' : sn.opcaoSimples === 'N' ? 'NÃO' : null,
+            descricaoOpcaoSimples:
+              sn.opcaoSimples === 'S' ? 'SIM' : sn.opcaoSimples === 'N' ? 'NÃO' : null,
             dataOpcaoSimples: sn.dataOpcaoSimples,
             dataExclusaoSimples: sn.dataExclusaoSimples,
             opcaoMei: sn.opcaoMei,

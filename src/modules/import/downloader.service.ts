@@ -21,7 +21,8 @@ export class DownloaderService {
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
   ) {
-    this.baseUrl = this.config.get<string>('app.receitaBaseUrl') ?? 'https://dados.rfb.gov.br/CNPJ/';
+    this.baseUrl =
+      this.config.get<string>('app.receitaBaseUrl') ?? 'https://dados.rfb.gov.br/CNPJ/';
     this.downloadDir = this.config.get<string>('app.downloadDir') ?? '/data/downloads';
   }
 
@@ -40,9 +41,7 @@ export class DownloaderService {
     let match: RegExpExecArray | null;
     while ((match = regex.exec(html)) !== null) {
       const nome = path.basename(match[1]);
-      const url = match[1].startsWith('http')
-        ? match[1]
-        : `${this.baseUrl}${match[1]}`;
+      const url = match[1].startsWith('http') ? match[1] : `${this.baseUrl}${match[1]}`;
       arquivos.push({ nome, url });
     }
 

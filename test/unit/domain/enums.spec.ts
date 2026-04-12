@@ -2,22 +2,13 @@ import {
   descricaoSituacaoCadastral,
   SituacaoCadastral,
 } from '../../../src/domain/enums/situacao-cadastral.enum';
-import {
-  descricaoPorteEmpresa,
-  PorteEmpresa,
-} from '../../../src/domain/enums/porte-empresa.enum';
+import { descricaoPorteEmpresa, PorteEmpresa } from '../../../src/domain/enums/porte-empresa.enum';
 import {
   descricaoIdentificadorSocio,
   IdentificadorSocio,
 } from '../../../src/domain/enums/identificador-socio.enum';
-import {
-  descricaoMatrizFilial,
-  MatrizFilial,
-} from '../../../src/domain/enums/matriz-filial.enum';
-import {
-  descricaoFaixaEtaria,
-  FaixaEtaria,
-} from '../../../src/domain/enums/faixa-etaria.enum';
+import { descricaoMatrizFilial, MatrizFilial } from '../../../src/domain/enums/matriz-filial.enum';
+import { descricaoFaixaEtaria, FaixaEtaria } from '../../../src/domain/enums/faixa-etaria.enum';
 
 describe('Domain Enums', () => {
   describe('SituacaoCadastral', () => {

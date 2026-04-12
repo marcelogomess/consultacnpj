@@ -1,7 +1,10 @@
 # ===================================================
 # Stage 1: Build
 # ===================================================
-FROM node:20-alpine AS builder
+FROM node:22-alpine3.21 AS builder
+
+# Atualiza pacotes do Alpine para eliminar CVEs conhecidas
+RUN apk upgrade --no-cache
 
 WORKDIR /app
 
@@ -19,7 +22,10 @@ RUN npm run build
 # ===================================================
 # Stage 2: Runtime
 # ===================================================
-FROM node:20-alpine AS runtime
+FROM node:22-alpine3.21 AS runtime
+
+# Atualiza pacotes do Alpine para eliminar CVEs conhecidas
+RUN apk upgrade --no-cache
 
 WORKDIR /app
 

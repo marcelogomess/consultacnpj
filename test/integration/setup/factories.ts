@@ -15,9 +15,7 @@ export async function criarNaturezaJuridica(
   });
 }
 
-export async function criarPais(
-  overrides: Partial<{ codigo: string; descricao: string }> = {},
-) {
+export async function criarPais(overrides: Partial<{ codigo: string; descricao: string }> = {}) {
   const codigo = overrides.codigo ?? '105';
   return prisma.pais.upsert({
     where: { codigo },
@@ -48,9 +46,7 @@ export async function criarQualificacao(
   });
 }
 
-export async function criarCnae(
-  overrides: Partial<{ codigo: string; descricao: string }> = {},
-) {
+export async function criarCnae(overrides: Partial<{ codigo: string; descricao: string }> = {}) {
   const codigo = overrides.codigo ?? '6201501';
   return prisma.cnae.upsert({
     where: { codigo },

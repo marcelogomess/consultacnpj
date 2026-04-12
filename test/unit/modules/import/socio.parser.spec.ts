@@ -7,21 +7,23 @@ describe('SocioParser', () => {
     parser = new SocioParser();
   });
 
-  const buildFields = (overrides: Partial<Record<number, string>> = {}): string[] => {
+  const buildFields = (overrides: Record<number, string> = {}): string[] => {
     const defaults = [
       '11222333', // 0: cnpjBasico
-      '2',        // 1: identificadorSocio (PF)
+      '2', // 1: identificadorSocio (PF)
       'JOAO DA SILVA', // 2: nomeSocio
       '***456789**', // 3: cpfCnpjSocio (descaracterizado)
-      '49',       // 4: qualificacaoSocio
+      '49', // 4: qualificacaoSocio
       '20200101', // 5: dataEntradaSociedade
-      '',         // 6: pais
-      '',         // 7: representanteLegal
-      '',         // 8: nomeRepresentante
-      '',         // 9: qualificacaoRepresentante
-      '4',        // 10: faixaEtaria (31-40 anos)
+      '', // 6: pais
+      '', // 7: representanteLegal
+      '', // 8: nomeRepresentante
+      '', // 9: qualificacaoRepresentante
+      '4', // 10: faixaEtaria (31-40 anos)
     ];
-    Object.entries(overrides).forEach(([i, v]) => { defaults[Number(i)] = v; });
+    Object.entries(overrides).forEach(([i, v]) => {
+      defaults[Number(i)] = v;
+    });
     return defaults;
   };
 
