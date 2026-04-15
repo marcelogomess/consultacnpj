@@ -10,6 +10,8 @@ export class SocioRepository {
 
   async insertBatch(records: Socio[]): Promise<number> {
     if (records.length === 0) return 0;
+    // createMany é suficiente: sócios são truncados antes de cada importação completa,
+    // por isso não há risco de duplicatas e não precisamos de upsert.
     const result = await this.prisma.socio.createMany({
       data: records.map((r) => ({
         cnpjBasico: r.cnpjBasico,
@@ -24,16 +26,16 @@ export class SocioRepository {
         qualificacaoRepresentante: r.qualificacaoRepresentante,
         faixaEtaria: r.faixaEtaria,
       })),
-      skipDuplicates: true,
     });
     return result.count;
   }
 
-  async deleteByCnpjBasico(cnpjBasico: string): Promise<void> {
-    await this.prisma.socio.deleteMany({ where: { cnpjBasico } });
+  /** Limpa toda a tabela antes de uma importação completa. */
+  async truncate(): Promise<void> {
+    await this.prisma.$executeRaw`TRUNCATE TABLE socios RESTART IDENTITY`;
   }
 
-  async deleteAll(): Promise<void> {
-    await this.prisma.socio.deleteMany({});
+  async deleteByCnpjBasico(cnpjBasico: string): Promise<void> {
+    await this.prisma.socio.deleteMany({ where: { cnpjBasico } });
   }
 }

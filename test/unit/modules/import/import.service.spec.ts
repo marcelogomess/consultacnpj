@@ -30,9 +30,12 @@ const mockDominioRepo = {
 };
 const mockEmpresaRepo = { upsertBatch: jest.fn().mockResolvedValue(3) };
 const mockEstabRepo = { upsertBatch: jest.fn().mockResolvedValue(2) };
-const mockSocioRepo = { insertBatch: jest.fn().mockResolvedValue(3) };
+const mockSocioRepo = {
+  insertBatch: jest.fn().mockResolvedValue(3),
+  truncate: jest.fn().mockResolvedValue(undefined),
+};
 const mockPrisma = {
-  simplesNacional: { upsert: jest.fn() },
+  $executeRaw: jest.fn().mockResolvedValue(0),
   $transaction: jest.fn().mockResolvedValue([]),
 };
 
@@ -64,6 +67,8 @@ describe('ImportService', () => {
     mockEmpresaRepo.upsertBatch.mockResolvedValue(3);
     mockEstabRepo.upsertBatch.mockResolvedValue(2);
     mockSocioRepo.insertBatch.mockResolvedValue(3);
+    mockSocioRepo.truncate.mockResolvedValue(undefined);
+    mockPrisma.$executeRaw.mockResolvedValue(0);
     mockPrisma.$transaction.mockResolvedValue([]);
   });
 

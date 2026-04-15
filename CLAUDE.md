@@ -114,7 +114,9 @@ test/
 | `DATABASE_URL` | URL completa do PostgreSQL | — |
 | `PORT` | Porta HTTP da API | `3000` |
 | `NODE_ENV` | `development` / `production` / `test` | `development` |
-| `RECEITA_BASE_URL` | URL base do site da Receita | `https://dados.rfb.gov.br/CNPJ/` |
+| `RECEITA_BASE_URL` | URL base do servidor Nextcloud da Receita | `https://arquivos.receitafederal.gov.br` |
+| `RECEITA_SHARE_TOKEN` | Token do compartilhamento público (Basic auth username) | `YggdBLfdninEJX9` |
+| `RECEITA_PERIODO` | Período a baixar (`yyyy-MM`); vazio = mês corrente | `` |
 | `DOWNLOAD_DIR` | Diretório para salvar .zip e CSVs | `/data/downloads` |
 | `IMPORT_BATCH_SIZE` | Registros por batch de upsert | `5000` |
 | `LOG_LEVEL` | `debug` / `info` / `warn` / `error` | `info` |

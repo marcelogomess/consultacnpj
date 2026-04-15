@@ -15,37 +15,68 @@ export interface ArquivoDisponivel {
 export class DownloaderService {
   private readonly logger = new Logger(DownloaderService.name);
   private readonly baseUrl: string;
+  private readonly shareToken: string;
   private readonly downloadDir: string;
+  readonly periodo: string;
 
   constructor(
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
   ) {
     this.baseUrl =
-      this.config.get<string>('app.receitaBaseUrl') ?? 'https://dados.rfb.gov.br/CNPJ/';
+      this.config.get<string>('app.receitaBaseUrl') ??
+      'https://arquivos.receitafederal.gov.br';
+    this.shareToken = this.config.get<string>('app.receitaShareToken') ?? '';
     this.downloadDir = this.config.get<string>('app.downloadDir') ?? '/data/downloads';
+    this.periodo =
+      this.config.get<string>('app.receitaPeriodo') || this.periodoAtual();
+  }
+
+  periodoAtual(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  private authHeader(): Record<string, string> {
+    if (!this.shareToken) return {};
+    const basic = Buffer.from(`${this.shareToken}:`).toString('base64');
+    return { Authorization: `Basic ${basic}` };
   }
 
   async listarArquivosDisponiveis(): Promise<ArquivoDisponivel[]> {
-    this.logger.log(`Listando arquivos em ${this.baseUrl}`);
-    const response = await axios.get<string>(this.baseUrl, {
+    const webdavUrl = `${this.baseUrl}/public.php/webdav/${this.periodo}/`;
+    this.logger.log(`Listando arquivos WebDAV: ${webdavUrl} (período: ${this.periodo})`);
+
+    const response = await axios.request<string>({
+      method: 'PROPFIND',
+      url: webdavUrl,
+      headers: {
+        ...this.authHeader(),
+        Depth: '1',
+        'Content-Type': 'application/xml; charset=utf-8',
+        'User-Agent': 'cnpj-api/1.0',
+      },
+      data: `<?xml version="1.0" encoding="utf-8"?>
+        <d:propfind xmlns:d="DAV:">
+          <d:prop><d:displayname/><d:resourcetype/></d:prop>
+        </d:propfind>`,
       timeout: 30000,
-      headers: { 'User-Agent': 'cnpj-api/1.0' },
     });
 
-    const html = response.data;
-    const arquivos: ArquivoDisponivel[] = [];
+    const xml = response.data as string;
 
-    // Extrai links .zip da página HTML
-    const regex = /href="([^"]*\.zip)"/gi;
-    let match: RegExpExecArray | null;
-    while ((match = regex.exec(html)) !== null) {
-      const nome = path.basename(match[1]);
-      const url = match[1].startsWith('http') ? match[1] : `${this.baseUrl}${match[1]}`;
-      arquivos.push({ nome, url });
-    }
+    // Extrai <d:href> (qualquer prefixo de namespace) filtrando apenas .zip
+    const hrefs = [...xml.matchAll(/<[a-zA-Z]+:href[^>]*>([^<]+)<\/[a-zA-Z]+:href>/gi)]
+      .map(m => m[1].trim())
+      .filter(href => href.toLowerCase().endsWith('.zip'));
 
-    this.logger.log(`Encontrados ${arquivos.length} arquivos`);
+    const arquivos: ArquivoDisponivel[] = hrefs.map(href => {
+      const nome = path.basename(decodeURIComponent(href));
+      const url = `${this.baseUrl}/public.php/webdav/${this.periodo}/${encodeURIComponent(nome)}`;
+      return { nome, url };
+    });
+
+    this.logger.log(`Encontrados ${arquivos.length} arquivos para ${this.periodo}`);
     return arquivos;
   }
 
@@ -60,7 +91,10 @@ export class DownloaderService {
     const response = await axios.get(arquivo.url, {
       responseType: 'stream',
       timeout: 300000,
-      headers: { 'User-Agent': 'cnpj-api/1.0' },
+      headers: {
+        'User-Agent': 'cnpj-api/1.0',
+        ...this.authHeader(),
+      },
     });
 
     await new Promise<void>((resolve, reject) => {

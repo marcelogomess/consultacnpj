@@ -20,7 +20,9 @@
     "test": "jest --config test/unit/jest.config.ts",
     "test:watch": "jest --config test/unit/jest.config.ts --watch",
     "test:e2e": "jest --config test/integration/jest-e2e.config.ts",
-    "test:cov": "jest --config test/unit/jest.config.ts --coverage"
+    "test:cov": "jest --config test/unit/jest.config.ts --coverage",
+    "download": "ts-node -r tsconfig-paths/register scripts/run-download.ts",
+    "import": "ts-node -r tsconfig-paths/register scripts/run-import.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.19",
