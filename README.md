@@ -49,7 +49,7 @@ O sistema tem três responsabilidades independentes, cada uma com seu próprio e
 
 | Componente | Entrypoint | Descrição |
 |------------|-----------|-----------|
-| **API REST** | `node dist/main` | Serve os endpoints de consulta |
+| **API REST** | `node dist/src/main` | Serve os endpoints de consulta |
 | **Job Download** | `node dist/scripts/run-download` | Baixa e descompacta os `.zip` da Receita |
 | **Job Importação** | `node dist/scripts/run-import` | Parseia os CSVs e grava no banco |
 
@@ -59,13 +59,13 @@ O sistema tem três responsabilidades independentes, cada uma com seu próprio e
 
 | Camada | Tecnologia | Versão |
 |--------|-----------|--------|
-| Runtime | Node.js | 20 LTS |
+| Runtime | Node.js | 24 |
 | Framework | NestJS | 10+ |
 | Linguagem | TypeScript | 5+ (strict) |
 | ORM | Prisma | 5+ |
 | Banco | PostgreSQL | 16 |
 | Validação | class-validator | 0.14+ |
-| Testes | Jest + Supertest | 29+ |
+| Testes | Jest + Supertest | 30+ |
 | Container | Docker multi-stage | — |
 | Orquestração | Kubernetes + Kustomize | — |
 
@@ -73,9 +73,9 @@ O sistema tem três responsabilidades independentes, cada uma com seu próprio e
 
 ## Pré-requisitos
 
-- **Node.js** 20 LTS
+- **Node.js** 24 (v24.14.1)
 - **Docker** e **Docker Compose** (para banco local)
-- **npm** 10+
+- **npm** 11+
 
 ---
 
@@ -434,7 +434,7 @@ npm run test:e2e
 docker build -f docker/Dockerfile -t cnpj-api:latest .
 ```
 
-A imagem usa **multi-stage build** com Node.js 20 Alpine:
+A imagem usa **multi-stage build** com Node.js 24 Alpine:
 - **Stage builder**: compila TypeScript, gera Prisma client
 - **Stage runtime**: apenas dependências de produção, usuário não-root
 

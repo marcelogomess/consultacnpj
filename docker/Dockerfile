@@ -1,10 +1,10 @@
 # ===================================================
 # Stage 1: Build
 # ===================================================
-FROM node:22-alpine3.21 AS builder
+FROM node:24.14.1-alpine AS builder
 
-# Atualiza pacotes do Alpine para eliminar CVEs conhecidas
-RUN apk upgrade --no-cache
+# Atualiza pacotes do Alpine e instala OpenSSL (necessário para Prisma)
+RUN apk upgrade --no-cache && apk add --no-cache openssl
 
 WORKDIR /app
 
@@ -22,10 +22,10 @@ RUN npm run build
 # ===================================================
 # Stage 2: Runtime
 # ===================================================
-FROM node:22-alpine3.21 AS runtime
+FROM node:24.14.1-alpine AS runtime
 
-# Atualiza pacotes do Alpine para eliminar CVEs conhecidas
-RUN apk upgrade --no-cache
+# Atualiza pacotes do Alpine e instala OpenSSL (necessário para Prisma)
+RUN apk upgrade --no-cache && apk add --no-cache openssl
 
 WORKDIR /app
 
@@ -51,4 +51,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health/live || exit 1
 
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main"]

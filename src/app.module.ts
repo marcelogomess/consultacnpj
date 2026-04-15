@@ -18,7 +18,7 @@ import databaseConfig from './common/config/database.config';
     }),
     ThrottlerModule.forRoot([
       {
-        ttl: 60000,
+        ttl: 60,
         limit: 100,
       },
     ]),

@@ -12,7 +12,7 @@ API REST em NestJS 10 que consome os dados públicos de CNPJ da Receita Federal 
 
 | Camada | Tecnologia |
 |--------|-----------|
-| Runtime | Node.js 20 LTS |
+| Runtime | Node.js 24 |
 | Framework | NestJS 10 + Express |
 | Linguagem | TypeScript strict |
 | ORM | Prisma 5 |

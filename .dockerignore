@@ -1,0 +1,38 @@
+# Dependências (reinstaladas no build)
+node_modules/
+
+# Build output
+dist/
+
+# Testes e cobertura
+test/
+coverage/
+
+# Git
+.git/
+.gitignore
+
+# Editor
+.vscode/
+.idea/
+
+# Docker local
+docker/docker-compose.yml
+
+# Ambiente (nunca no container)
+.env
+.env.local
+.env.development
+.env.staging
+.env.production
+
+# Cache e logs
+*.log
+*.tsbuildinfo
+.eslintcache
+
+# Kubernetes
+k8s/
+
+# Documentação
+*.md
