@@ -29,14 +29,22 @@ const mockDominioRepo = {
   upsertMotivos: jest.fn().mockResolvedValue(4),
 };
 const mockEmpresaRepo = { upsertBatch: jest.fn().mockResolvedValue(3) };
-const mockEstabRepo = { upsertBatch: jest.fn().mockResolvedValue(2) };
+const mockEstabRepo = {
+  inicializar: jest.fn().mockResolvedValue(undefined),
+  upsertBatch: jest.fn().mockResolvedValue(2),
+};
 const mockSocioRepo = {
   insertBatch: jest.fn().mockResolvedValue(3),
   truncate: jest.fn().mockResolvedValue(undefined),
 };
 const mockPrisma = {
   $executeRaw: jest.fn().mockResolvedValue(0),
+  $queryRaw: jest.fn().mockResolvedValue([]), // retorna array vazio = nenhum cnpj_basico válido
   $transaction: jest.fn().mockResolvedValue([]),
+  importLog: {
+    findFirst: jest.fn().mockResolvedValue(null), // null = ainda não importado
+    create: jest.fn().mockResolvedValue({}),
+  },
 };
 
 describe('ImportService', () => {
@@ -65,11 +73,15 @@ describe('ImportService', () => {
     mockDominioRepo.upsertCnaes.mockResolvedValue(4);
     mockDominioRepo.upsertMotivos.mockResolvedValue(4);
     mockEmpresaRepo.upsertBatch.mockResolvedValue(3);
+    mockEstabRepo.inicializar.mockResolvedValue(undefined);
     mockEstabRepo.upsertBatch.mockResolvedValue(2);
     mockSocioRepo.insertBatch.mockResolvedValue(3);
     mockSocioRepo.truncate.mockResolvedValue(undefined);
     mockPrisma.$executeRaw.mockResolvedValue(0);
+    mockPrisma.$queryRaw.mockResolvedValue([]);
     mockPrisma.$transaction.mockResolvedValue([]);
+    mockPrisma.importLog.findFirst.mockResolvedValue(null);
+    mockPrisma.importLog.create.mockResolvedValue({});
   });
 
   it('deve estar definido', () => {

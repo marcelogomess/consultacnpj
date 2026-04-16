@@ -2,7 +2,6 @@ import { Injectable, NotFoundException, BadRequestException, Logger } from '@nes
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   validarCnpj,
-  limparCnpj,
   formatarCnpj,
   extrairPartesCnpj,
 } from '../../common/utils/cnpj.util';
@@ -28,17 +27,15 @@ export class CnpjService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async buscarPorCnpj(cnpjRaw: string): Promise<CnpjResponseDto> {
-    const cnpjLimpo = limparCnpj(cnpjRaw);
-
-    if (!validarCnpj(cnpjLimpo)) {
+  async buscarPorCnpj(cnpj: string): Promise<CnpjResponseDto> {
+    if (!validarCnpj(cnpj)) {
       throw new BadRequestException({
-        message: 'CNPJ inválido',
+        message: 'CNPJ inválido. Informe exatamente 14 dígitos numéricos sem pontuação',
         error: 'CNPJ_INVALIDO',
       });
     }
 
-    const { basico } = extrairPartesCnpj(cnpjLimpo);
+    const { basico } = extrairPartesCnpj(cnpj);
 
     const empresa = await this.prisma.empresa.findUnique({
       where: { cnpjBasico: basico },
@@ -50,18 +47,14 @@ export class CnpjService {
             municipio: true,
           },
         },
-        socios: {
-          include: {
-            pais: true,
-          },
-        },
+        socios: true,
         simplesNacional: true,
       },
     });
 
     if (!empresa) {
       throw new NotFoundException({
-        message: `CNPJ ${formatarCnpj(cnpjLimpo)} não encontrado`,
+        message: `CNPJ ${cnpj} não encontrado`,
         error: 'CNPJ_NAO_ENCONTRADO',
       });
     }
@@ -107,6 +100,21 @@ export class CnpjService {
           })
         : [];
     const motivoMap = new Map(motivos.map((m) => [m.codigo, m.descricao]));
+
+    // Buscar países dos sócios em batch.
+    // A FK socios_pais_fkey foi removida para preservar códigos que a Receita
+    // Federal usa em SOCIOCSV mas que não constam em PAISCSV. A descrição é
+    // resolvida aqui; se o código não existir em paises, retorna string vazia.
+    const uniquePaisCodes = [
+      ...new Set(
+        empresa.socios.map((s) => s.paisCodigo).filter((c): c is string => c !== null),
+      ),
+    ];
+    const paisList =
+      uniquePaisCodes.length > 0
+        ? await this.prisma.pais.findMany({ where: { codigo: { in: uniquePaisCodes } } })
+        : [];
+    const paisMap = new Map(paisList.map((p) => [p.codigo, p.descricao]));
 
     const estabelecimentosDto: EstabelecimentoResponseDto[] = empresa.estabelecimentos.map(
       (est) => {
@@ -189,7 +197,9 @@ export class CnpjService {
         descricao: qualMap.get(socio.qualificacaoSocioCodigo) ?? '',
       },
       dataEntrada: socio.dataEntradaSociedade,
-      pais: socio.pais ? { codigo: socio.pais.codigo, descricao: socio.pais.descricao } : null,
+      pais: socio.paisCodigo
+        ? { codigo: socio.paisCodigo, descricao: paisMap.get(socio.paisCodigo) ?? '' }
+        : null,
       representanteLegal: socio.representanteLegal,
       nomeRepresentante: socio.nomeRepresentante,
       qualificacaoRepresentante: socio.qualificacaoRepresentante
@@ -209,7 +219,7 @@ export class CnpjService {
     const sn = empresa.simplesNacional;
 
     return {
-      cnpj: formatarCnpj(cnpjLimpo),
+      cnpj: formatarCnpj(cnpj),
       cnpjBasico: empresa.cnpjBasico,
       razaoSocial: empresa.razaoSocial,
       naturezaJuridica: {

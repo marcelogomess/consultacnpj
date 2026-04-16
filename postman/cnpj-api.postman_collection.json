@@ -139,7 +139,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "cnpj", "{{cnpj_rfb}}"]
             },
-            "description": "Retorna dados completos de um CNPJ: empresa, todos os estabelecimentos, sócios e dados do Simples Nacional.\n\nAceita CNPJ com ou sem formatação:\n- `00394460000141`\n- `00.394.460/0001-41`\n\n**Erros possíveis:**\n- `400 CNPJ_INVALIDO` — CNPJ com dígito verificador inválido ou formato errado\n- `404 CNPJ_NAO_ENCONTRADO` — CNPJ válido mas não encontrado no banco"
+            "description": "Retorna dados completos de um CNPJ: empresa, todos os estabelecimentos, sócios e dados do Simples Nacional.\n\n**Formato obrigatório:** exatamente 14 dígitos numéricos, sem pontuação.\n- ✅ `00394460000141`\n- ❌ `00.394.460/0001-41` — a barra `/` quebra a URL e não é aceita\n\n**Erros possíveis:**\n- `400 CNPJ_INVALIDO` — entrada não são 14 dígitos numéricos, ou dígito verificador inválido\n- `404 CNPJ_NAO_ENCONTRADO` — CNPJ válido mas não encontrado no banco"
           },
           "response": [
             {
@@ -172,7 +172,7 @@
               "status": "Bad Request",
               "code": 400,
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"statusCode\": 400,\n  \"code\": \"CNPJ_INVALIDO\",\n  \"message\": \"CNPJ inválido\",\n  \"path\": \"/api/cnpj/00000000000000\",\n  \"timestamp\": \"2024-01-01T00:00:00.000Z\"\n}"
+              "body": "{\n  \"statusCode\": 400,\n  \"code\": \"CNPJ_INVALIDO\",\n  \"message\": \"CNPJ inválido. Informe exatamente 14 dígitos numéricos sem pontuação\",\n  \"path\": \"/api/cnpj/00000000000000\",\n  \"timestamp\": \"2024-01-01T00:00:00.000Z\"\n}"
             },
             {
               "name": "404 — CNPJ não encontrado",
@@ -188,7 +188,7 @@
               "status": "Not Found",
               "code": 404,
               "header": [{ "key": "Content-Type", "value": "application/json" }],
-              "body": "{\n  \"statusCode\": 404,\n  \"code\": \"CNPJ_NAO_ENCONTRADO\",\n  \"message\": \"CNPJ 00.000.000/0001-91 não encontrado\",\n  \"path\": \"/api/cnpj/00000000000191\",\n  \"timestamp\": \"2024-01-01T00:00:00.000Z\"\n}"
+              "body": "{\n  \"statusCode\": 404,\n  \"code\": \"CNPJ_NAO_ENCONTRADO\",\n  \"message\": \"CNPJ 00000000000191 não encontrado\",\n  \"path\": \"/api/cnpj/00000000000191\",\n  \"timestamp\": \"2024-01-01T00:00:00.000Z\"\n}"
             }
           ],
           "event": [
@@ -219,20 +219,6 @@
               }
             }
           ]
-        },
-        {
-          "name": "Buscar por CNPJ formatado",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/cnpj/00.394.460/0001-41",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "cnpj", "00.394.460", "0001-41"]
-            },
-            "description": "Mesmo endpoint, aceitando CNPJ com formatação (pontos, barra e hífen)."
-          },
-          "response": []
         },
         {
           "name": "Listar CNPJs — GET /cnpj",

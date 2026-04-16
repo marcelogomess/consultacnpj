@@ -118,7 +118,7 @@ test/
 | `RECEITA_SHARE_TOKEN` | Token do compartilhamento público (Basic auth username) | `YggdBLfdninEJX9` |
 | `RECEITA_PERIODO` | Período a baixar (`yyyy-MM`); vazio = mês corrente | `` |
 | `DOWNLOAD_DIR` | Diretório para salvar .zip e CSVs | `/data/downloads` |
-| `IMPORT_BATCH_SIZE` | Registros por batch de upsert | `5000` |
+| `IMPORT_BATCH_SIZE` | Registros lidos do CSV por iteração (chunking SQL interno respeita limite do PostgreSQL) | `5000` |
 | `LOG_LEVEL` | `debug` / `info` / `warn` / `error` | `info` |
 | `LOG_FORMAT` | `json` (prod) / `text` (dev) | `json` |
 
@@ -130,7 +130,7 @@ Ver `.env.example` para template completo.
 |--------|------|-----------|
 | GET | `/api/health/live` | Liveness probe (sempre 200) |
 | GET | `/api/health/ready` | Readiness probe (verifica banco) |
-| GET | `/api/cnpj/:cnpj` | Busca completa por CNPJ (14 dígitos, com ou sem máscara) |
+| GET | `/api/cnpj/:cnpj` | Busca completa por CNPJ (exatamente 14 dígitos numéricos, sem pontuação) |
 | GET | `/api/cnpj` | Lista paginada com filtros (`uf`, `situacao_cadastral`, `cnae`, `porte`, etc.) |
 | GET | `/api/dominio/paises` | Lista todos os países |
 | GET | `/api/dominio/municipios?uf=MG` | Lista municípios (filtro por UF) |

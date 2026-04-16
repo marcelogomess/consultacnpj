@@ -16,7 +16,6 @@ model Pais {
   descricao String @map("descricao") @db.VarChar(255)
 
   estabelecimentos Estabelecimento[] @relation("EstabelecimentoPais")
-  socios           Socio[]           @relation("SocioPais")
 
   @@map("paises")
 }
@@ -147,7 +146,6 @@ model Socio {
   faixaEtaria               String? @map("faixa_etaria") @db.Char(1)
 
   empresa Empresa @relation(fields: [cnpjBasico], references: [cnpjBasico])
-  pais    Pais?   @relation("SocioPais", fields: [paisCodigo], references: [codigo])
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -178,6 +176,7 @@ model ImportLog {
   id           Int       @id @default(autoincrement())
   tipo         String    @db.VarChar(20)
   arquivo      String    @db.VarChar(255)
+  md5          String?   @db.Char(32)
   status       String    @db.VarChar(20)
   registros    Int?
   erro         String?   @db.Text
@@ -185,5 +184,6 @@ model ImportLog {
   finalizadoEm DateTime? @map("finalizado_em")
 
   @@index([tipo, status])
+  @@index([md5])
   @@map("import_logs")
 }

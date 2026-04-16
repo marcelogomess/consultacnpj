@@ -14,7 +14,8 @@
       "Bash(npm --version)",
       "Bash(node -e \"require\\('fs'\\).existsSync\\('dist/src/main.js'\\) ? console.log\\('dist/src/main.js OK'\\) : console.log\\('AUSENTE'\\)\")",
       "Bash(npm audit *)",
-      "WebFetch(domain:arquivos.receitafederal.gov.br)"
+      "WebFetch(domain:arquivos.receitafederal.gov.br)",
+      "Bash(npx prisma *)"
     ]
   }
 }

@@ -37,13 +37,6 @@ describe('cnpj.util', () => {
       expect(partes.ordem).toBe('0001');
       expect(partes.dv).toBe('81');
     });
-
-    it('deve funcionar com CNPJ formatado', () => {
-      const partes = extrairPartesCnpj('11.222.333/0001-81');
-      expect(partes.basico).toBe('11222333');
-      expect(partes.ordem).toBe('0001');
-      expect(partes.dv).toBe('81');
-    });
   });
 
   describe('validarCnpj', () => {
@@ -52,8 +45,8 @@ describe('cnpj.util', () => {
       expect(validarCnpj('11222333000181')).toBe(true);
     });
 
-    it('deve aceitar CNPJ formatado', () => {
-      expect(validarCnpj('11.222.333/0001-81')).toBe(true);
+    it('deve rejeitar CNPJ formatado com pontuação (entrada inválida)', () => {
+      expect(validarCnpj('11.222.333/0001-81')).toBe(false);
     });
 
     it('deve rejeitar CNPJ com dígitos verificadores inválidos', () => {

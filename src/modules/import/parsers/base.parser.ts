@@ -55,7 +55,10 @@ export abstract class BaseParser<T> {
     for await (const record of parser) {
       lineCount++;
       try {
-        const parsed = this.parseLine(record as string[]);
+        // Remove null bytes (0x00) que aparecem em alguns CSVs da Receita e são
+        // rejeitados pelo PostgreSQL com o erro 22021 ("invalid byte sequence for UTF8")
+        const fields = (record as string[]).map((f) => f.replace(/\x00/g, ''));
+        const parsed = this.parseLine(fields);
         if (parsed !== null) {
           batch.push(parsed);
           if (batch.length >= batchSize) {

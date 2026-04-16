@@ -73,9 +73,8 @@ describe('CnpjService', () => {
       await expect(service.buscarPorCnpj('00000000000191')).rejects.toThrow(NotFoundException);
     });
 
-    it('deve aceitar CNPJ formatado com pontuação', async () => {
-      mockPrismaService.empresa.findUnique.mockResolvedValue(null);
-      await expect(service.buscarPorCnpj('00.000.000/0001-91')).rejects.toThrow(NotFoundException);
+    it('deve rejeitar CNPJ formatado com pontuação como entrada inválida', async () => {
+      await expect(service.buscarPorCnpj('00.000.000/0001-91')).rejects.toThrow(BadRequestException);
     });
 
     it('deve retornar empresa completa com simplesNacional quando presente', async () => {
