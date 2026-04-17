@@ -135,11 +135,12 @@ CREATE TABLE "simples_nacional" (
     CONSTRAINT "simples_nacional_pkey" PRIMARY KEY ("cnpj_basico")
 );
 
--- CreateTable
+-- CreateTable: coluna md5 incluída desde a criação para controle de deduplicação
 CREATE TABLE "import_logs" (
     "id" SERIAL NOT NULL,
     "tipo" VARCHAR(20) NOT NULL,
     "arquivo" VARCHAR(255) NOT NULL,
+    "md5" CHAR(32),
     "status" VARCHAR(20) NOT NULL,
     "registros" INTEGER,
     "erro" TEXT,
@@ -173,6 +174,9 @@ CREATE INDEX "socios_cpf_cnpj_socio_idx" ON "socios"("cpf_cnpj_socio");
 -- CreateIndex
 CREATE INDEX "import_logs_tipo_status_idx" ON "import_logs"("tipo", "status");
 
+-- CreateIndex
+CREATE INDEX "import_logs_md5_idx" ON "import_logs"("md5");
+
 -- AddForeignKey
 ALTER TABLE "empresas" ADD CONSTRAINT "empresas_natureza_juridica_fkey" FOREIGN KEY ("natureza_juridica") REFERENCES "naturezas_juridicas"("codigo") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -185,11 +189,10 @@ ALTER TABLE "estabelecimentos" ADD CONSTRAINT "estabelecimentos_pais_fkey" FOREI
 -- AddForeignKey
 ALTER TABLE "estabelecimentos" ADD CONSTRAINT "estabelecimentos_municipio_fkey" FOREIGN KEY ("municipio") REFERENCES "municipios"("codigo") ON DELETE SET NULL ON UPDATE CASCADE;
 
--- AddForeignKey
+-- AddForeignKey: socios_pais_fkey omitida intencionalmente — CSVs da Receita Federal
+-- usam códigos de país em SOCIOCSV que não constam em PAISCSV. O código é gravado
+-- como está no CSV e a descrição é resolvida via JOIN em tempo de consulta.
 ALTER TABLE "socios" ADD CONSTRAINT "socios_cnpj_basico_fkey" FOREIGN KEY ("cnpj_basico") REFERENCES "empresas"("cnpj_basico") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "socios" ADD CONSTRAINT "socios_pais_fkey" FOREIGN KEY ("pais") REFERENCES "paises"("codigo") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "simples_nacional" ADD CONSTRAINT "simples_nacional_cnpj_basico_fkey" FOREIGN KEY ("cnpj_basico") REFERENCES "empresas"("cnpj_basico") ON DELETE RESTRICT ON UPDATE CASCADE;

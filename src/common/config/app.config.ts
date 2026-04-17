@@ -11,4 +11,6 @@ export default registerAs('app', () => ({
   receitaPeriodo: process.env.RECEITA_PERIODO ?? '',
   downloadDir: process.env.DOWNLOAD_DIR ?? '/data/downloads',
   importBatchSize: parseInt(process.env.IMPORT_BATCH_SIZE ?? '5000', 10),
+  rateLimitTtl: parseInt(process.env.RATE_LIMIT_TTL ?? '60', 10),
+  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX ?? '100', 10),
 }));

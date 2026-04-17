@@ -28,6 +28,9 @@ patches:
       - op: replace
         path: /data/LOG_FORMAT
         value: "text"
+      - op: replace
+        path: /data/RATE_LIMIT_MAX
+        value: "0"
     target:
       kind: ConfigMap
       name: cnpj-api-config

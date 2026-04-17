@@ -119,6 +119,8 @@ test/
 | `RECEITA_PERIODO` | Período a baixar (`yyyy-MM`); vazio = mês corrente | `` |
 | `DOWNLOAD_DIR` | Diretório para salvar .zip e CSVs | `/data/downloads` |
 | `IMPORT_BATCH_SIZE` | Registros lidos do CSV por iteração (chunking SQL interno respeita limite do PostgreSQL) | `5000` |
+| `RATE_LIMIT_TTL` | Janela de tempo do rate limiting em segundos | `60` |
+| `RATE_LIMIT_MAX` | Máximo de requisições por IP na janela definida por `RATE_LIMIT_TTL`; `0` desativa o controle | `100` |
 | `LOG_LEVEL` | `debug` / `info` / `warn` / `error` | `info` |
 | `LOG_FORMAT` | `json` (prod) / `text` (dev) | `json` |
 
@@ -138,6 +140,8 @@ Ver `.env.example` para template completo.
 | GET | `/api/dominio/naturezas-juridicas` | Lista naturezas jurídicas |
 | GET | `/api/dominio/qualificacoes` | Lista qualificações de sócios |
 | GET | `/api/dominio/motivos-situacao` | Lista motivos de situação cadastral |
+
+Rate limiting (aplicado a `/api/cnpj` e `/api/dominio`): configurável via `RATE_LIMIT_MAX` req / `RATE_LIMIT_TTL` s por IP (via `@nestjs/throttler`). Defina `RATE_LIMIT_MAX=0` para desativar.
 
 Rate limiting: 100 req/min por IP (via `@nestjs/throttler`).
 

@@ -1,5 +1,5 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { AppThrottlerGuard } from '../../common/guards/throttler.guard';
 import { IsOptional, IsString } from 'class-validator';
 import { DominioService } from './dominio.service';
 
@@ -16,7 +16,7 @@ class CnaeQueryDto {
 }
 
 @Controller('dominio')
-@UseGuards(ThrottlerGuard)
+@UseGuards(AppThrottlerGuard)
 export class DominioController {
   constructor(private readonly dominioService: DominioService) {}
 

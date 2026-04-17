@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   validarCnpj,
@@ -23,8 +23,6 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class CnpjService {
-  private readonly logger = new Logger(CnpjService.name);
-
   constructor(private readonly prisma: PrismaService) {}
 
   async buscarPorCnpj(cnpj: string): Promise<CnpjResponseDto> {
@@ -59,61 +57,63 @@ export class CnpjService {
       });
     }
 
-    // Buscar qualificações em batch
-    const qualCodes = [
-      empresa.qualificacaoResponsavel,
-      ...empresa.socios.map((s) => s.qualificacaoSocioCodigo),
-      ...empresa.socios
-        .map((s) => s.qualificacaoRepresentante)
-        .filter((q): q is string => q !== null),
+    // Coletar todos os códigos para lookups em batch
+    const uniqueQualCodes = [
+      ...new Set([
+        empresa.qualificacaoResponsavel,
+        ...empresa.socios.map((s) => s.qualificacaoSocioCodigo),
+        ...empresa.socios
+          .map((s) => s.qualificacaoRepresentante)
+          .filter((q): q is string => q !== null),
+      ]),
     ];
-    const uniqueQualCodes = [...new Set(qualCodes)];
-    const qualificacoes = await this.prisma.qualificacaoSocio.findMany({
-      where: { codigo: { in: uniqueQualCodes } },
-    });
-    const qualMap = new Map(qualificacoes.map((q) => [q.codigo, q.descricao]));
 
-    // Buscar CNAEs secundários
+    const cnaePrincipalCodes = empresa.estabelecimentos
+      .map((e) => e.cnaeFiscalPrincipal)
+      .filter((c): c is string => c !== null);
     const cnaeSecundariosCodes = empresa.estabelecimentos
       .flatMap((e) =>
         e.cnaeFiscalSecundaria ? e.cnaeFiscalSecundaria.split(',').map((c) => c.trim()) : [],
       )
       .filter(Boolean);
-    const uniqueCnaeCodes = [...new Set(cnaeSecundariosCodes)];
-    const cnaes =
-      uniqueCnaeCodes.length > 0
-        ? await this.prisma.cnae.findMany({
-            where: { codigo: { in: uniqueCnaeCodes } },
-          })
-        : [];
-    const cnaeMap = new Map(cnaes.map((c) => [c.codigo, c.descricao]));
+    const uniqueCnaeCodes = [...new Set([...cnaePrincipalCodes, ...cnaeSecundariosCodes])];
 
-    // Buscar motivos de situação cadastral
-    const motivoCodes = empresa.estabelecimentos
-      .map((e) => e.motivoSituacaoCadastralCodigo)
-      .filter((m): m is string => m !== null);
-    const uniqueMotivoCodes = [...new Set(motivoCodes)];
-    const motivos =
-      uniqueMotivoCodes.length > 0
-        ? await this.prisma.motivoSituacaoCadastral.findMany({
-            where: { codigo: { in: uniqueMotivoCodes } },
-          })
-        : [];
-    const motivoMap = new Map(motivos.map((m) => [m.codigo, m.descricao]));
+    const uniqueMotivoCodes = [
+      ...new Set(
+        empresa.estabelecimentos
+          .map((e) => e.motivoSituacaoCadastralCodigo)
+          .filter((m): m is string => m !== null),
+      ),
+    ];
 
-    // Buscar países dos sócios em batch.
     // A FK socios_pais_fkey foi removida para preservar códigos que a Receita
     // Federal usa em SOCIOCSV mas que não constam em PAISCSV. A descrição é
-    // resolvida aqui; se o código não existir em paises, retorna string vazia.
+    // resolvida aqui via JOIN em memória; código sem correspondência retorna ''.
     const uniquePaisCodes = [
       ...new Set(
         empresa.socios.map((s) => s.paisCodigo).filter((c): c is string => c !== null),
       ),
     ];
-    const paisList =
+
+    // Executar todos os lookups em paralelo
+    const [qualificacoes, cnaes, motivos, paisList] = await Promise.all([
+      this.prisma.qualificacaoSocio.findMany({ where: { codigo: { in: uniqueQualCodes } } }),
+      uniqueCnaeCodes.length > 0
+        ? this.prisma.cnae.findMany({ where: { codigo: { in: uniqueCnaeCodes } } })
+        : Promise.resolve([]),
+      uniqueMotivoCodes.length > 0
+        ? this.prisma.motivoSituacaoCadastral.findMany({
+            where: { codigo: { in: uniqueMotivoCodes } },
+          })
+        : Promise.resolve([]),
       uniquePaisCodes.length > 0
-        ? await this.prisma.pais.findMany({ where: { codigo: { in: uniquePaisCodes } } })
-        : [];
+        ? this.prisma.pais.findMany({ where: { codigo: { in: uniquePaisCodes } } })
+        : Promise.resolve([]),
+    ]);
+
+    const qualMap = new Map(qualificacoes.map((q) => [q.codigo, q.descricao]));
+    const cnaeMap = new Map(cnaes.map((c) => [c.codigo, c.descricao]));
+    const motivoMap = new Map(motivos.map((m) => [m.codigo, m.descricao]));
     const paisMap = new Map(paisList.map((p) => [p.codigo, p.descricao]));
 
     const estabelecimentosDto: EstabelecimentoResponseDto[] = empresa.estabelecimentos.map(

@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import { CnpjModule } from './modules/cnpj/cnpj.module';
@@ -16,12 +16,16 @@ import databaseConfig from './common/config/database.config';
       load: [appConfig, databaseConfig],
       envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60,
-        limit: 100,
-      },
-    ]),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          ttl: config.get<number>('app.rateLimitTtl') ?? 60,
+          limit: config.get<number>('app.rateLimitMax') ?? 100,
+        },
+      ],
+    }),
     PrismaModule,
     HealthModule,
     CnpjModule,

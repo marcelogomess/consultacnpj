@@ -1,10 +1,10 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { AppThrottlerGuard } from '../../common/guards/throttler.guard';
 import { CnpjService } from './cnpj.service';
 import { ConsultaCnpjDto } from './dto/consulta-cnpj.dto';
 
 @Controller('cnpj')
-@UseGuards(ThrottlerGuard)
+@UseGuards(AppThrottlerGuard)
 export class CnpjController {
   constructor(private readonly cnpjService: CnpjService) {}
 

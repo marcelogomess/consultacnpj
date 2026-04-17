@@ -8,6 +8,9 @@ data:
   PORT: "3000"
   LOG_LEVEL: "info"
   LOG_FORMAT: "json"
-  RECEITA_BASE_URL: "https://dados.rfb.gov.br/CNPJ/"
+  RECEITA_BASE_URL: "https://arquivos.receitafederal.gov.br"
+  # RECEITA_PERIODO: ""  # deixe vazio para usar o mês corrente
   DOWNLOAD_DIR: "/data/downloads"
   IMPORT_BATCH_SIZE: "5000"
+  RATE_LIMIT_TTL: "60"
+  RATE_LIMIT_MAX: "100"

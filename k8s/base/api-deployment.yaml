@@ -37,11 +37,18 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+          startupProbe:
+            httpGet:
+              path: /api/health/live
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 18  # até 90s para o NestJS/Prisma inicializar
           livenessProbe:
             httpGet:
               path: /api/health/live
               port: 3000
-            initialDelaySeconds: 10
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 3
@@ -49,7 +56,6 @@ spec:
             httpGet:
               path: /api/health/ready
               port: 3000
-            initialDelaySeconds: 5
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3

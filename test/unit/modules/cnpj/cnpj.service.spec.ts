@@ -16,6 +16,9 @@ const mockPrismaService = {
   motivoSituacaoCadastral: {
     findMany: jest.fn(),
   },
+  pais: {
+    findMany: jest.fn(),
+  },
   estabelecimento: {
     count: jest.fn(),
     findMany: jest.fn(),
@@ -53,6 +56,7 @@ describe('CnpjService', () => {
     mockPrismaService.qualificacaoSocio.findMany.mockResolvedValue([]);
     mockPrismaService.cnae.findMany.mockResolvedValue([]);
     mockPrismaService.motivoSituacaoCadastral.findMany.mockResolvedValue([]);
+    mockPrismaService.pais.findMany.mockResolvedValue([]);
   });
 
   describe('buscarPorCnpj', () => {
@@ -249,6 +253,86 @@ describe('CnpjService', () => {
       const result = await service.buscarPorCnpj('00000000000191');
 
       expect(typeof result.capitalSocial).toBe('number');
+    });
+
+    it('deve resolver descrição do CNAE principal', async () => {
+      mockPrismaService.empresa.findUnique.mockResolvedValue(
+        buildEmpresaMock({
+          estabelecimentos: [
+            {
+              cnpjBasico: '00000000',
+              cnpjOrdem: '0001',
+              cnpjDv: '91',
+              identificadorMatrizFilial: '1',
+              nomeFantasia: null,
+              situacaoCadastral: '02',
+              dataSituacaoCadastral: null,
+              motivoSituacaoCadastralCodigo: null,
+              nomeCidadeExterior: null,
+              paisCodigo: null,
+              dataInicioAtividade: null,
+              cnaeFiscalPrincipal: '6201501',
+              cnaeFiscalSecundaria: null,
+              tipoLogradouro: null,
+              logradouro: null,
+              numero: null,
+              complemento: null,
+              bairro: null,
+              cep: null,
+              uf: null,
+              municipioCodigo: null,
+              ddd1: null,
+              telefone1: null,
+              ddd2: null,
+              telefone2: null,
+              dddFax: null,
+              fax: null,
+              correioEletronico: null,
+              situacaoEspecial: null,
+              dataSituacaoEspecial: null,
+              pais: null,
+              municipio: null,
+            },
+          ],
+        }),
+      );
+      mockPrismaService.cnae.findMany.mockResolvedValue([
+        { codigo: '6201501', descricao: 'DESENVOLVIMENTO SOB ENCOMENDA' },
+      ]);
+
+      const result = await service.buscarPorCnpj('00000000000191');
+
+      expect(result.estabelecimentos[0].cnaePrincipal?.descricao).toBe(
+        'DESENVOLVIMENTO SOB ENCOMENDA',
+      );
+    });
+
+    it('deve resolver país do sócio quando paisCodigo está preenchido', async () => {
+      mockPrismaService.empresa.findUnique.mockResolvedValue(
+        buildEmpresaMock({
+          socios: [
+            {
+              identificadorSocio: '2',
+              nomeSocio: 'JOHN DOE',
+              cpfCnpjSocio: null,
+              qualificacaoSocioCodigo: '49',
+              dataEntradaSociedade: '20200101',
+              paisCodigo: '249',
+              representanteLegal: null,
+              nomeRepresentante: null,
+              qualificacaoRepresentante: null,
+              faixaEtaria: null,
+            },
+          ],
+        }),
+      );
+      mockPrismaService.pais.findMany.mockResolvedValue([
+        { codigo: '249', descricao: 'ESTADOS UNIDOS' },
+      ]);
+
+      const result = await service.buscarPorCnpj('00000000000191');
+
+      expect(result.socios[0].pais).toEqual({ codigo: '249', descricao: 'ESTADOS UNIDOS' });
     });
   });
 
